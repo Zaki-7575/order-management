@@ -40,9 +40,9 @@ const itemVariants: Variants = {
 export default function DashboardPage() {
   const [archiveType, setArchiveType] = useState('active');
 
-  const { data: ordersPerDay, isLoading: loading1 } = useQuery({ queryKey: ["ordersPerDay", archiveType], queryFn: () => fetchOrdersPerDay(archiveType) });
-  const { data: revenuePerStore, isLoading: loading2 } = useQuery({ queryKey: ["revenuePerStore", archiveType], queryFn: () => fetchRevenuePerStore(archiveType) });
-  const { data: topItems, isLoading: loading3 } = useQuery({ queryKey: ["topItems", archiveType], queryFn: () => fetchTopItems(archiveType) });
+  const { data: ordersPerDay, isLoading: loading1, isError: isErr1 } = useQuery({ queryKey: ["ordersPerDay", archiveType], queryFn: () => fetchOrdersPerDay(archiveType) });
+  const { data: revenuePerStore, isLoading: loading2, isError: isErr2 } = useQuery({ queryKey: ["revenuePerStore", archiveType], queryFn: () => fetchRevenuePerStore(archiveType) });
+  const { data: topItems, isLoading: loading3, isError: isErr3 } = useQuery({ queryKey: ["topItems", archiveType], queryFn: () => fetchTopItems(archiveType) });
   const { data: storesResponse, isLoading: loading4 } = useQuery({ queryKey: ["stores"], queryFn: () => getStores() });
   const stores = storesResponse || [];
   const { data: itemsResponse, isLoading: loading5 } = useQuery({ queryKey: ["items"], queryFn: getItems });
@@ -168,78 +168,36 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                <LineChart data={ordersPerDay} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" strokeOpacity={0.5} />
-                  <XAxis dataKey="date" tickFormatter={(val) => new Date(val).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12, fontWeight: 700}} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12, fontWeight: 700}} dx={-10} />
-                  <RechartsTooltip 
-                    contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(8px)', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.8)', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)' }}
-                    labelFormatter={(val) => new Date(val).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
-                    itemStyle={{ fontWeight: '900', color: '#4f46e5' }}
-                  />
-                  <Line type="monotone" dataKey="count" name="Orders" stroke="#6366f1" strokeWidth={4} dot={{r: 0}} activeDot={{r: 8, strokeWidth: 0, fill: '#6366f1'}} style={{ filter: 'drop-shadow(0px 8px 8px rgba(99, 102, 241, 0.3))' }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </motion.div>
-
-          {/* Revenue Per Store Chart */}
-          <motion.div variants={itemVariants} className={glassStyle}>
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-emerald-50 rounded-xl text-emerald-600">
-                  <TrendingUp className="w-5 h-5" />
+              {isErr1 ? (
+                <div className="h-full w-full flex items-center justify-center text-rose-500 font-bold bg-rose-50/50 rounded-2xl border border-rose-100">
+                  ⚠️ Failed to load Orders data. Check API connection.
                 </div>
-                <div>
-                  <h2 className="text-lg font-black text-slate-800 tracking-tight">Revenue by Store</h2>
-                  <p className="text-xs font-bold text-slate-400">Total earnings breakdown</p>
-                </div>
-              </div>
-            </div>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                <BarChart data={mappedRevenuePerStore} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" strokeOpacity={0.5} />
-                  <XAxis dataKey="store_name" axisLine={false} tickLine={false} tick={false} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12, fontWeight: 700}} dx={-10} tickFormatter={(val) => `$${val}`} />
-                  <RechartsTooltip 
-                    cursor={{fill: 'rgba(241, 245, 249, 0.5)'}}
-                    contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(8px)', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.8)', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)' }}
-                    formatter={(val: any) => [`$${Number(val || 0).toFixed(2)}`, 'Revenue']}
-                    labelStyle={{ fontWeight: 'bold', color: '#1e293b' }}
-                    itemStyle={{ fontWeight: '900', color: '#10b981' }}
-                  />
-                  <Legend 
-                    content={() => (
-                      <div className="flex flex-wrap justify-center gap-4 pt-5">
-                        {mappedRevenuePerStore?.map((entry: any, index: number) => (
-                          <div key={`legend-${index}`} className="flex items-center gap-2 text-xs font-extrabold text-slate-500">
-                            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
-                            {entry.store_name}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  />
-                  <Bar dataKey="revenue" name="Revenue" radius={[6, 6, 0, 0]} barSize={32}>
-                    {mappedRevenuePerStore?.map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                  <LineChart data={ordersPerDay} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" strokeOpacity={0.5} />
+                    <XAxis dataKey="date" tickFormatter={(val) => new Date(val).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12, fontWeight: 700}} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12, fontWeight: 700}} dx={-10} />
+                    <RechartsTooltip 
+                      contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(8px)', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.8)', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)' }}
+                      labelFormatter={(val) => new Date(val).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                      itemStyle={{ fontWeight: '900', color: '#4f46e5' }}
+                    />
+                    <Line type="monotone" dataKey="count" name="Orders" stroke="#6366f1" strokeWidth={4} dot={{r: 0}} activeDot={{r: 8, strokeWidth: 0, fill: '#6366f1'}} style={{ filter: 'drop-shadow(0px 8px 8px rgba(99, 102, 241, 0.3))' }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </motion.div>
 
           {/* Top Items Pie Chart */}
-          <motion.div variants={itemVariants} className={`${glassStyle} lg:col-span-2`}>
+          <motion.div variants={itemVariants} className={glassStyle}>
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-fuchsia-50 rounded-xl text-fuchsia-600">
@@ -252,37 +210,97 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="h-[350px] flex justify-center">
-              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                <PieChart>
-                  <Pie
-                    data={mappedTopItems}
-                    dataKey="total_qty"
-                    nameKey="item_name"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={90}
-                    outerRadius={140}
-                    paddingAngle={8}
-                    stroke="none"
-                    cornerRadius={6}
-                  >
-                    {mappedTopItems?.map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} style={{ filter: `drop-shadow(0px 10px 10px ${COLORS[index % COLORS.length]}40)` }} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip 
-                    contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(8px)', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.8)', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)' }}
-                    formatter={(val: any) => [val, 'Quantity Sold']}
-                    itemStyle={{ fontWeight: '900' }}
-                  />
-                  <Legend 
-                    iconType="circle" 
-                    layout="horizontal"
-                    verticalAlign="bottom"
-                    wrapperStyle={{ paddingTop: '30px', fontWeight: 800, fontSize: '13px', color: '#64748b' }} 
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              {isErr3 ? (
+                <div className="h-full w-full flex items-center justify-center text-rose-500 font-bold bg-rose-50/50 rounded-2xl border border-rose-100">
+                  ⚠️ Failed to load Items data. Check API connection.
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                  <PieChart>
+                    <Pie
+                      data={mappedTopItems}
+                      dataKey="total_qty"
+                      nameKey="item_name"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={90}
+                      outerRadius={140}
+                      paddingAngle={8}
+                      stroke="none"
+                      cornerRadius={6}
+                    >
+                      {mappedTopItems?.map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} style={{ filter: `drop-shadow(0px 10px 10px ${COLORS[index % COLORS.length]}40)` }} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip 
+                      contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(8px)', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.8)', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)' }}
+                      formatter={(val: any) => [val, 'Quantity Sold']}
+                      itemStyle={{ fontWeight: '900' }}
+                    />
+                    <Legend 
+                      iconType="circle" 
+                      layout="horizontal"
+                      verticalAlign="bottom"
+                      wrapperStyle={{ paddingTop: '30px', fontWeight: 800, fontSize: '13px', color: '#64748b' }} 
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Revenue Per Store Chart */}
+          <motion.div variants={itemVariants} className={`${glassStyle} lg:col-span-2`}>
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-emerald-50 rounded-xl text-emerald-600">
+                  <TrendingUp className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-black text-slate-800 tracking-tight">Revenue by Store</h2>
+                  <p className="text-xs font-bold text-slate-400">Total earnings breakdown</p>
+                </div>
+              </div>
+            </div>
+            <div className="h-[300px]">
+              {isErr2 ? (
+                <div className="h-full w-full flex items-center justify-center text-rose-500 font-bold bg-rose-50/50 rounded-2xl border border-rose-100">
+                  ⚠️ Failed to load Revenue data. Check API connection.
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                  <BarChart data={mappedRevenuePerStore} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" strokeOpacity={0.5} />
+                    <XAxis dataKey="store_name" axisLine={false} tickLine={false} tick={false} />
+                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12, fontWeight: 700}} dx={-10} tickFormatter={(val) => `$${val}`} />
+                    <RechartsTooltip 
+                      cursor={{fill: 'rgba(241, 245, 249, 0.5)'}}
+                      contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(8px)', borderRadius: '1rem', border: '1px solid rgba(226, 232, 240, 0.8)', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)' }}
+                      formatter={(val: any) => [`$${Number(val || 0).toFixed(2)}`, 'Revenue']}
+                      labelStyle={{ fontWeight: 'bold', color: '#1e293b' }}
+                      itemStyle={{ fontWeight: '900', color: '#10b981' }}
+                    />
+                    <Legend 
+                      content={() => (
+                        <div className="flex flex-wrap justify-center gap-4 pt-5">
+                          {mappedRevenuePerStore?.map((entry: any, index: number) => (
+                            <div key={`legend-${index}`} className="flex items-center gap-2 text-xs font-extrabold text-slate-500">
+                              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
+                              {entry.store_name}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    />
+                    <Bar dataKey="revenue" name="Revenue" radius={[6, 6, 0, 0]} barSize={32}>
+                      {mappedRevenuePerStore?.map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </motion.div>
 
