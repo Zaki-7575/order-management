@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Order {
+  id           String      @id @default(uuid())
+  store_id     String
+  total_amount Float
+  status       OrderStatus @default(PLACED)
+  created_at   DateTime    @default(now())
+
+  items OrderItem[]
+
+  @@index([store_id])
+  @@index([created_at])
+}
+
+model OrderItem {
+  id      String @id @default(uuid())
+  item_id String
+  qty     Int
+
+  orderId String
+  order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model OrderArchive {
+  id           String      @id
+  store_id     String
+  total_amount Float
+  status       OrderStatus
+  created_at   DateTime
+  archived_at  DateTime    @default(now())
+
+  items OrderItemArchive[]
+
+  @@index([store_id])
+  @@index([created_at])
+}
+
+model OrderItemArchive {
+  id      String @id
+  item_id String
+  qty     Int
+
+  orderArchiveId String
+  orderArchive   OrderArchive @relation(fields: [orderArchiveId], references: [id], onDelete: Cascade)
+}
+
+enum OrderStatus {
+  PLACED
+  PREPARING
+  COMPLETED
+}
+
+model Store {
+  id        String   @id @default(uuid())
+  name      String
+  location  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Item {
+  id        String   @id @default(uuid())
+  name      String
+  category  String?
+  price     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
