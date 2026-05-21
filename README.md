@@ -10,21 +10,11 @@ A full-stack Order Management application built to manage store locations, menu 
 
 ---
 
-## 🛠️ Setup Instructions
+## 🛠️ Setup Instructions (For Evaluators)
 
-### 1. Database Setup (Docker - Recommended)
-To make database setup incredibly easy and to fulfill the **Docker setup bonus requirement**, a `docker-compose.yml` file is included in the root directory.
+To make testing this application locally as easy as possible, I have included a live testing database connection in the repository. You do not need to install PostgreSQL or Docker to run this.
 
-1. Ensure you have [Docker](https://www.docker.com/) installed and running.
-2. Open a terminal in the root folder and run:
-   ```bash
-   docker-compose up -d
-   ```
-This will instantly spin up a PostgreSQL instance on port 5432 with the required database name.
-
-*(Alternative: You can also just install PostgreSQL locally and create a database manually).*
-
-### 2. Backend Setup (`/order-management-server`)
+### 1. Backend Setup (`/order-management-server`)
 1. Open a terminal and navigate to the backend folder:
    ```bash
    cd order-management-server
@@ -33,14 +23,14 @@ This will instantly spin up a PostgreSQL instance on port 5432 with the required
    ```bash
    npm install
    ```
-3. Create a `.env` file in the root of `order-management-server` and add your database URL (if using the Docker setup above, use this exact URL):
-   ```env
-   DATABASE_URL="postgresql://postgres:password@localhost:5432/order_management_db?schema=public"
-   PORT=5000
-   ```
-4. Run the database migrations to generate the schema:
+3. Set up environment variables by copying the example file:
    ```bash
-   npx prisma migrate dev
+   cp .env.example .env
+   ```
+   *(Note: This connects to a live Supabase database that is already seeded with test data!)*
+4. Generate the Prisma Client:
+   ```bash
+   npx prisma generate
    ```
 5. Start the backend development server:
    ```bash
@@ -48,8 +38,8 @@ This will instantly spin up a PostgreSQL instance on port 5432 with the required
    ```
    *The server will start on `http://localhost:5000`*
 
-### 3. Frontend Setup (`/order-management-client`)
-1. Open a new terminal and navigate to the frontend folder:
+### 2. Frontend Setup (`/order-management-client`)
+1. Open a **new** terminal and navigate to the frontend folder:
    ```bash
    cd order-management-client
    ```
@@ -57,9 +47,9 @@ This will instantly spin up a PostgreSQL instance on port 5432 with the required
    ```bash
    npm install
    ```
-3. Create a `.env.local` file in the root of `order-management-client` and point it to the backend API:
-   ```env
-   NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
+3. Set up environment variables by copying the example file:
+   ```bash
+   cp .env.example .env.local
    ```
 4. Start the Next.js development server:
    ```bash
