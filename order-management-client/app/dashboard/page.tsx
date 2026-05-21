@@ -10,7 +10,7 @@ import {
 import { 
   TrendingUp, Archive, DollarSign, ShoppingCart, Activity, ShoppingBag 
 } from "lucide-react";
-import { message, Select } from "antd";
+import { message, Select, Table } from "antd";
 import { motion, Variants } from "framer-motion";
 import { 
   fetchOrdersPerDay, 
@@ -39,6 +39,7 @@ const itemVariants: Variants = {
 
 export default function DashboardPage() {
   const [archiveType, setArchiveType] = useState('active');
+  const [revenueView, setRevenueView] = useState<'chart' | 'table'>('chart');
 
   const { data: ordersPerDay, isLoading: loading1, isError: isErr1 } = useQuery({ queryKey: ["ordersPerDay", archiveType], queryFn: () => fetchOrdersPerDay(archiveType) });
   const { data: revenuePerStore, isLoading: loading2, isError: isErr2 } = useQuery({ queryKey: ["revenuePerStore", archiveType], queryFn: () => fetchRevenuePerStore(archiveType) });
@@ -262,11 +263,32 @@ export default function DashboardPage() {
                   <p className="text-xs font-bold text-slate-400">Total earnings breakdown</p>
                 </div>
               </div>
+              <Select
+                value={revenueView}
+                onChange={(val) => setRevenueView(val as 'chart' | 'table')}
+                options={[
+                  { label: 'Chart View', value: 'chart' },
+                  { label: 'Table View', value: 'table' }
+                ]}
+                className="w-36 [&_.ant-select-selector]:!rounded-xl [&_.ant-select-selector]:!border-slate-200 [&_.ant-select-selector]:!bg-white font-bold"
+              />
             </div>
-            <div className="h-[300px]">
+            <div className={revenueView === 'chart' ? "h-[300px]" : "h-auto min-h-[300px]"}>
               {isErr2 ? (
                 <div className="h-full w-full flex items-center justify-center text-rose-500 font-bold bg-rose-50/50 rounded-2xl border border-rose-100">
                   ⚠️ Failed to load Revenue data. Check API connection.
+                </div>
+              ) : revenueView === 'table' ? (
+                <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm bg-white">
+                  <Table 
+                    dataSource={mappedRevenuePerStore} 
+                    rowKey="store_id"
+                    pagination={{ pageSize: 5 }}
+                    columns={[
+                      { title: 'Store Name', dataIndex: 'store_name', key: 'store_name', className: 'font-bold text-slate-700' },
+                      { title: 'Revenue', dataIndex: 'revenue', key: 'revenue', className: 'font-black text-emerald-600', render: (val) => `$${Number(val || 0).toFixed(2)}` }
+                    ]}
+                  />
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%" minWidth={0}>
